@@ -1,0 +1,1070 @@
+    <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Farm Monitor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .header h1 {
+            color: #2c5aa0;
+            font-size: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .header .status {
+            font-size: 0.9rem;
+            color: #28a745;
+            margin-top: 0.2rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .tab {
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .tab.active {
+            background: #28a745;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+        }
+
+        .tab:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 3px 10px rgba(0,0,0,0.15);
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .card h3 {
+            color: #2c5aa0;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .farm-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .field {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 1rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .field.healthy { border-color: #28a745; background: #d4edda; }
+        .field.warning { border-color: #ffc107; background: #fff3cd; }
+        .field.danger { border-color: #dc3545; background: #f8d7da; }
+
+        .field:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .field-status {
+            display: inline-block;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-top: 0.5rem;
+        }
+
+        .status-healthy { background: #28a745; color: white; }
+        .status-warning { background: #ffc107; color: #212529; }
+        .status-danger { background: #dc3545; color: white; }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .metric {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 10px;
+            text-align: center;
+            border-left: 4px solid #28a745;
+        }
+
+        .metric.warning { border-left-color: #ffc107; }
+        .metric.danger { border-left-color: #dc3545; }
+
+        .metric-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #2c5aa0;
+        }
+
+        .metric-label {
+            color: #666;
+            font-size: 0.9rem;
+            margin-top: 0.3rem;
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+
+        .control-panel {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 10px;
+            border: 1px solid #e9ecef;
+        }
+
+        .control-panel h4 {
+            color: #2c5aa0;
+            margin-bottom: 1rem;
+        }
+
+        .btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin: 0.2rem;
+        }
+
+        .btn:hover {
+            background: #218838;
+            transform: translateY(-1px);
+            box-shadow: 0 3px 8px rgba(40, 167, 69, 0.3);
+        }
+
+        .btn.stop {
+            background: #dc3545;
+        }
+
+        .btn.stop:hover {
+            background: #c82333;
+        }
+
+        .slider-container {
+            margin: 1rem 0;
+        }
+
+        .slider {
+            width: 100%;
+            height: 8px;
+            border-radius: 5px;
+            background: #ddd;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #28a745;
+            cursor: pointer;
+        }
+
+        .slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #28a745;
+            cursor: pointer;
+            border: none;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background: #e9ecef;
+            border-radius: 5px;
+            overflow: hidden;
+            margin: 0.5rem 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #28a745, #20c997);
+            transition: width 0.3s ease;
+            border-radius: 5px;
+        }
+
+        .alerts {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .alert-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #ffeaa7;
+        }
+
+        .alert-item:last-child {
+            border-bottom: none;
+        }
+
+        .system-status {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #28a745;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                padding: 1rem;
+            }
+           
+            .header h1 {
+                font-size: 1.5rem;
+            }
+           
+            .container {
+                margin: 1rem auto;
+                padding: 0 0.5rem;
+            }
+           
+            .tabs {
+                justify-content: center;
+            }
+           
+            .tab {
+                font-size: 0.9rem;
+                padding: 0.6rem 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+            <div class="header">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+            <div>
+                <h1 id="mainTitle">🌱 Smart Farm Monitor</h1>
+                <div class="system-status">
+                    <div class="status-indicator"></div>
+                    <span class="status" id="systemStatus">System Online • Last Updated: <span id="lastUpdate">--:--</span></span>
+                </div>
+            </div>
+            <div class="language-selector">
+                <select id="langSelect" onchange="changeLanguage()" class="btn" style="padding: 0.5rem 1rem; font-size: 0.9rem; border: none; border-radius: 25px; background: #28a745; color: white;">
+                    <option value="en">English</option>
+                    <option value="hi">हिंदी</option>
+                    <option value="mr">मराठी</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('overview')" data-en="Farm Overview" data-hi="फार्म विवरण" data-mr="शेत विहंगावलोकन">Farm Overview</button>
+            <button class="tab" onclick="showTab('health')" data-en="Plant Health" data-hi="पौधे का स्वास्थ्य" data-mr="वनस्पती आरोग्य">Plant Health</button>
+            <button class="tab" onclick="showTab('sprinkler')" data-en="Sprinkler Control" data-hi="स्प्रिंकलर नियंत्रण" data-mr="फवारा नियंत्रण">Sprinkler Control</button>
+            <button class="tab" onclick="showTab('reports')" data-en="Reports" data-hi="रिपोर्ट" data-mr="अहवाल">Reports</button>
+        </div>
+
+        <!-- Farm Overview Tab -->
+<div id="overview" class="tab-content active">
+    <div class="card">
+        <h3>🗺️ Farm Dashboard</h3>
+        <div class="farm-grid">
+            <div class="field warning" onclick="selectField('row1')">
+                <h4 data-en="Row 1 - Tomatoes" data-hi="पंक्ति 1 - टमाटर" data-mr="रांग 1 - टोमेटो">Row 1 - Tomatoes</h4>
+                <div class="field-status status-warning" data-en="Less Blight Detected" data-hi="कम रोग का पता चला" data-mr="कमी आजार आढळले">Low Blight Detected</div>
+                <small><span data-en="150 plants" data-hi="150 पौधे" data-mr="150 रोपे">150 plants</span> • <span data-en="70% infected" data-hi="90% परिपक्व" data-mr="90% पिकले">30% infected</span></small>
+            </div>
+            <div class="field healthy" onclick="selectField('row2')">
+                <h4 data-en="Row 2 - Tomatoes" data-hi="पंक्ति 2 - टमाटर" data-mr="रांग 2 - टोमेटो">Row 2 - Tomatoes</h4>
+                <div class="field-status status-healthy" data-en="Healthy" data-hi="स्वस्थ" data-mr="निरोगी">Healthy</div>
+                <small><span data-en="145 plants" data-hi="145 पौधे" data-mr="145 रोपे">145 plants</span> • <span data-en="85% mature" data-hi="85% परिपक्व" data-mr="85% पिकले">85% mature</span></small>
+            </div>
+            <div class="field warning" onclick="selectField('row3')">
+                <h4 data-en="Row 3 - Tomatoes" data-hi="पंक्ति 3 - टमाटर" data-mr="रांग 3 - टोमेटो">Row 3 - Tomatoes</h4>
+                <div class="field-status status-warning" data-en="Needs Water" data-hi="पानी चाहिए" data-mr="पाण्याची गरज">Needs Water</div>
+                <small><span data-en="140 plants" data-hi="140 पौधे" data-mr="140 रोपे">140 plants</span> • <span data-en="80% mature" data-hi="80% परिपक्व" data-mr="80% पिकले">80% mature</span></small>
+            </div>
+            <div class="field danger" onclick="selectField('row4')">
+                <h4 data-en="Row 4 - Tomatoes" data-hi="पंक्ति 4 - टमाटर" data-mr="रांग 4 - टोमेटो">Row 4 - Tomatoes</h4>
+                <div class="field-status status-danger" data-en="Highly Blight Detected" data-hi="अत्यधिक रोग का पता चला" data-mr="जास्त आजार आढळले">High Blight Detected</div>
+                <small><span data-en="135 plants" data-hi="135 पौधे" data-mr="135 रोपे">135 plants</span> • <span data-en="75% mature" data-hi="75% परिपक्व" data-mr="75% पिकले">70% infected</span></small>
+            </div>
+            <div class="field healthy" onclick="selectField('row5')">
+                <h4 data-en="Row 5 - Tomatoes" data-hi="पंक्ति 5 - टमाटर" data-mr="रांग 5 - टोमेटो">Row 5 - Tomatoes</h4>
+                <div class="field-status status-healthy" data-en="Healthy" data-hi="स्वस्थ" data-mr="निरोगी">Healthy</div>
+                <small><span data-en="155 plants" data-hi="155 पौधे" data-mr="155 रोपे">155 plants</span> • <span data-en="88% mature" data-hi="88% परिपक्व" data-mr="88% पिकले">88% mature</span></small>
+            </div>
+            <div class="field warning" onclick="selectField('row6')">
+                <h4 data-en="Row 6 - Tomatoes" data-hi="पंक्ति 6 - टमाटर" data-mr="रांग 6 - टोमेटो">Row 6 - Tomatoes</h4>
+                <div class="field-status status-warning" data-en="Low Nutrients" data-hi="कम पोषक तत्व" data-mr="कमी पोषक द्रव्ये">Low Nutrients</div>
+                <small><span data-en="148 plants" data-hi="148 पौधे" data-mr="148 रोपे">148 plants</span> • <span data-en="82% mature" data-hi="82% परिपक्व" data-mr="82% पिकले">82% mature</span></small>
+            </div>
+        </div>
+    </div>
+</div>
+
+            <div class="card">
+                <h3>📊 Quick Metrics</h3>
+                <div class="metrics-grid">
+                    <div class="metric">
+                        <div class="metric-value">22°C</div>
+                        <div class="metric-label">Temperature</div>
+                    </div>
+                    <div class="metric warning">
+                        <div class="metric-value">45%</div>
+                        <div class="metric-label">Humidity</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value">6.8</div>
+                        <div class="metric-label">Soil pH</div>
+                    </div>
+                    <div class="metric danger">
+                        <div class="metric-value">60%</div>
+                        <div class="metric-label">Soil Moisture</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Plant Health Tab -->
+        <div id="health" class="tab-content">
+            <div class="alerts">
+                <h4>⚠️ Active Alerts</h4>
+                <div class="alert-item">
+                    <span>🔴</span>
+                    <strong>Row 3:</strong> Fungal infection detected
+                </div>
+                <div class="alert-item">
+                    <span>🟡</span>
+                    <strong>Row 4:</strong> Low soil moisture - irrigation needed
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>🌡️ Environmental Monitoring</h3>
+                <div class="metrics-grid">
+                    <div class="metric">
+                        <div class="metric-value">22°C</div>
+                        <div class="metric-label">Air Temperature</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 70%;"></div>
+                        </div>
+                    </div>
+                    <div class="metric warning">
+                        <div class="metric-value">45%</div>
+                        <div class="metric-label">Air Humidity</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 45%;"></div>
+                        </div>
+                    </div>
+                    <div class="metric danger">
+                        <div class="metric-value">35%</div>
+                        <div class="metric-label">Soil Moisture</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 35%;"></div>
+                        </div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value">6.8</div>
+                        <div class="metric-label">Soil pH Level</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 68%;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>🦠 Disease Detection</h3>
+                <div class="farm-grid">
+                    <div class="field healthy">
+                        <h4 data-en="Row 1 - Tomatoes" data-hi="पंक्ति 1 - टमाटर" data-mr="रांग 1 - टोमेटो">Row 1 - Tomatoes</h4>
+                        <div class="field-status status-healthy" data-en="No Issues" data-hi="कोई समस्या नहीं" data-mr="कोणत्याही समस्या नाहीत">No Issues</div>
+                        <small data-en="Infection Level: 0%" data-hi="संक्रमण स्तर: 0%" data-mr="संसर्ग पातळी: 0%">Infection Level: 0%</small>
+                    </div>
+                    <div class="field healthy">
+                        <h4 data-en="Row 2 - Tomatoes" data-hi="पंक्ति 2 - टमाटर" data-mr="रांग 2 - टोमेटो">Row 2 - Tomatoes</h4>
+                        <div class="field-status status-healthy" data-en="No Issues" data-hi="कोई समस्या नहीं" data-mr="कोणत्याही समस्या नाहीत">No Issues</div>
+                        <small data-en="Infection Level: 2%" data-hi="संक्रमण स्तर: 2%" data-mr="संसर्ग पातळी: 2%">Infection Level: 2%</small>
+                    </div>
+                    <div class="field warning">
+                        <h4 data-en="Row 3 - Tomatoes" data-hi="पंक्ति 3 - टमाटर" data-mr="रांग 3 - टोमेटो">Row 3 - Tomatoes</h4>
+                        <div class="field-status status-warning" data-en="Water Stress" data-hi="पानी का तनाव" data-mr="पाण्याचा ताण">Water Stress</div>
+                        <small data-en="Infection Level: 8%" data-hi="संक्रमण स्तर: 8%" data-mr="संसर्ग पातळी: 8%">Infection Level: 8%</small>
+                    </div>
+                    <div class="field danger">
+                        <h4 data-en="Row 4 - Tomatoes" data-hi="पंक्ति 4 - टमाटर" data-mr="रांग 4 - टोमेटो">Row 4 - Tomatoes</h4>
+                        <div class="field-status status-danger" data-en="Blight Infection" data-hi="रोग संक्रमण" data-mr="आजार संसर्ग">Blight Infection</div>
+                        <small data-en="Infection Level: 35%" data-hi="संक्रमण स्तर: 35%" data-mr="संसर्ग पातळी: 35%">Infection Level: 35%</small>
+                    </div>
+                    <div class="field healthy">
+                        <h4 data-en="Row 5 - Tomatoes" data-hi="पंक्ति 5 - टमाटर" data-mr="रांग 5 - टोमेटो">Row 5 - Tomatoes</h4>
+                        <div class="field-status status-healthy" data-en="No Issues" data-hi="कोई समस्या नहीं" data-mr="कोणत्याही समस्या नाहीत">No Issues</div>
+                        <small data-en="Infection Level: 1%" data-hi="संक्रमण स्तर: 1%" data-mr="संसर्ग पातळी: 1%">Infection Level: 1%</small>
+                    </div>
+                    <div class="field warning">
+                        <h4 data-en="Row 6 - Tomatoes" data-hi="पंक्ति 6 - टमाटर" data-mr="रांग 6 - टोमेटो">Row 6 - Tomatoes</h4>
+                        <div class="field-status status-warning" data-en="Nutrient Deficiency" data-hi="पोषक तत्व की कमी" data-mr="पोषक द्रव्यांची कमी">Nutrient Deficiency</div>
+                        <small data-en="Infection Level: 12%" data-hi="संक्रमण स्तर: 12%" data-mr="संसर्ग पातळी: 12%">Infection Level: 12%</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sprinkler Control Tab -->
+        <div id="sprinkler" class="tab-content">
+            <div class="card">
+                <h3>💧 Sprinkler System Control</h3>
+                <div class="controls">
+                    <div class="control-panel">
+                        <h4 data-en="Row 1 - Tomatoes" data-hi="पंक्ति 1 - टमाटर" data-mr="रांग 1 - टोमेटो">Row 1 - Tomatoes</h4>
+                        <button class="btn" onclick="startSprinkler('1')" data-en="Start Sprinkler" data-hi="स्प्रिंकलर चालू करें" data-mr="फवारा सुरू करा">Start Sprinkler</button>
+                        <button class="btn stop" onclick="stopSprinkler('1')" data-en="Stop Sprinkler" data-hi="स्प्रिंकलर बंद करें" data-mr="फवारा बंद करा">Stop Sprinkler</button>
+                        <div class="slider-container">
+                            <label data-en="Duration:" data-hi="अवधि:" data-mr="कालावधी:">Duration: <span id="duration1">10</span> <span data-en="minutes" data-hi="मिनट" data-mr="मिनिटे">sec</span></label>
+                            <input type="range" min="1" max="30" value="10" class="slider" oninput="updateDuration('1', this.value)">
+                        </div>
+                        <div><span data-en="Status:" data-hi="स्थिति:" data-mr="स्थिती:">Status:</span> <span id="status1" data-en="Stopped" data-hi="बंद" data-mr="बंद">Stopped</span></div>
+                    </div>
+                   
+                    <div class="control-panel">
+                        <h4 data-en="Row 2 - Tomatoes" data-hi="पंक्ति 2 - टमाटर" data-mr="रांग 2 - टोमेटो">Row 2 - Tomatoes</h4>
+                        <button class="btn" onclick="startSprinkler('2')" data-en="Start Sprinkler" data-hi="स्प्रिंकलर चालू करें" data-mr="फवारा सुरू करा">Start Sprinkler</button>
+                        <button class="btn stop" onclick="stopSprinkler('2')" data-en="Stop Sprinkler" data-hi="स्प्रिंकलर बंद करें" data-mr="फवारा बंद करा">Stop Sprinkler</button>
+                        <div class="slider-container">
+                            <label data-en="Duration:" data-hi="अवधि:" data-mr="कालावधी:">Duration: <span id="duration2">25</span> <span data-en="minutes" data-hi="मिनट" data-mr="मिनिटे">sec</span></label>
+                            <input type="range" min="5" max="30" value="25" class="slider" oninput="updateDuration('2', this.value)">
+                        </div>
+                        <div><span data-en="Status:" data-hi="स्थिति:" data-mr="स्थिती:">Status:</span> <span id="status2" data-en="Stopped" data-hi="बंद" data-mr="बंद">Stopped</span></div>
+                    </div>
+                   
+                    <div class="control-panel">
+                        <h4 data-en="Row 3 - Tomatoes" data-hi="पंक्ति 3 - टमाटर" data-mr="रांग 3 - टोमेटो">Row 3 - Tomatoes</h4>
+                        <button class="btn" onclick="startSprinkler('3')" data-en="Start Sprinkler" data-hi="स्प्रिंकलर चालू करें" data-mr="फवारा सुरू करा">Start Sprinkler</button>
+                        <button class="btn stop" onclick="stopSprinkler('3')" data-en="Stop Sprinkler" data-hi="स्प्रिंकलर बंद करें" data-mr="फवारा बंद करा">Stop Sprinkler</button>
+                        <div class="slider-container">
+                            <label data-en="Duration:" data-hi="अवधि:" data-mr="कालावधी:">Duration: <span id="duration3">45</span> <span data-en="minutes" data-hi="मिनट" data-mr="मिनिटे">sec</span></label>
+                            <input type="range" min="0" max="30" value="5" class="slider" oninput="updateDuration('3', this.value)">
+                        </div>
+                        <div><span data-en="Status:" data-hi="स्थिति:" data-mr="स्थिती:">Status:</span> <span id="status3" data-en="Stopped" data-hi="बंद" data-mr="बंद">Stopped</span></div>
+                    </div>
+                   
+                    <div class="control-panel">
+                        <h4 data-en="Row 4 - Tomatoes" data-hi="पंक्ति 4 - टमाटर" data-mr="रांग 4 - टोमेटो">Row 4 - Tomatoes</h4>
+                        <button class="btn" onclick="startSprinkler('4')" data-en="Start Sprinkler" data-hi="स्प्रिंकलर चालू करें" data-mr="फवारा सुरू करा">Start Sprinkler</button>
+                        <button class="btn stop" onclick="stopSprinkler('4')" data-en="Stop Sprinkler" data-hi="स्प्रिंकलर बंद करें" data-mr="फवारा बंद करा">Stop Sprinkler</button>
+                        <div class="slider-container">
+                            <label data-en="Duration:" data-hi="अवधि:" data-mr="कालावधी:">Duration: <span id="duration4">35</span> <span data-en="minutes" data-hi="मिनट" data-mr="मिनिटे">sec</span></label>
+                            <input type="range" min="0" max="30" value="15" class="slider" oninput="updateDuration('4', this.value)">
+                        </div>
+                        <div><span data-en="Status:" data-hi="स्थिति:" data-mr="स्थिती:">Status:</span> <span id="status4" data-en="Stopped" data-hi="बंद" data-mr="बंद">Stopped</span></div>
+                    </div>
+                   
+                    <div class="control-panel">
+                        <h4 data-en="Row 5 - Tomatoes" data-hi="पंक्ति 5 - टमाटर" data-mr="रांग 5 - टोमेटो">Row 5 - Tomatoes</h4>
+                        <button class="btn" onclick="startSprinkler('5')" data-en="Start Sprinkler" data-hi="स्प्रिंकलर चालू करें" data-mr="फवारा सुरू करा">Start Sprinkler</button>
+                        <button class="btn stop" onclick="stopSprinkler('5')" data-en="Stop Sprinkler" data-hi="स्प्रिंकलर बंद करें" data-mr="फवारा बंद करा">Stop Sprinkler</button>
+                        <div class="slider-container">
+                            <label data-en="Duration:" data-hi="अवधि:" data-mr="कालावधी:">Duration: <span id="duration5">40</span> <span data-en="minutes" data-hi="मिनट" data-mr="मिनिटे">sec</span></label>
+                            <input type="range" min="0" max="30" value="10" class="slider" oninput="updateDuration('5', this.value)">
+                        </div>
+                        <div><span data-en="Status:" data-hi="स्थिति:" data-mr="स्थिती:">Status:</span> <span id="status5" data-en="Stopped" data-hi="बंद" data-mr="बंद">Stopped</span></div>
+                    </div>
+                   
+                    <div class="control-panel">
+                        <h4 data-en="Row 6 - Tomatoes" data-hi="पंक्ति 6 - टमाटर" data-mr="रांग 6 - टोमेटो">Row 6 - Tomatoes</h4>
+                        <button class="btn" onclick="startSprinkler('6')" data-en="Start Sprinkler" data-hi="स्प्रिंकलर चालू करें" data-mr="फवारा सुरू करा">Start Sprinkler</button>
+                        <button class="btn stop" onclick="stopSprinkler('6')" data-en="Stop Sprinkler" data-hi="स्प्रिंकलर बंद करें" data-mr="फवारा बंद करा">Stop Sprinkler</button>
+                        <div class="slider-container">
+                            <label data-en="Duration:" data-hi="अवधि:" data-mr="कालावधी:">Duration: <span id="duration6">30</span> <span data-en="minutes" data-hi="मिनट" data-mr="मिनिटे">sec</span></label>
+                            <input type="range" min="5" max="30" value="30" class="slider" oninput="updateDuration('6', this.value)">
+                        </div>
+                        <div><span data-en="Status:" data-hi="स्थिति:" data-mr="स्थिती:">Status:</span> <span id="status6" data-en="Stopped" data-hi="बंद" data-mr="बंद">Stopped</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>🎛️ Master Controls</h3>
+                <div style="text-align: center; padding: 1rem;">
+                    <button class="btn" onclick="startAllSprinklers()" style="font-size: 1.1rem; padding: 1rem 2rem;">Start All Sprinklers</button>
+                    <button class="btn stop" onclick="stopAllSprinklers()" style="font-size: 1.1rem; padding: 1rem 2rem;">Emergency Stop All</button>
+                </div>
+                <div class="metrics-grid">
+                    <div class="metric">
+                        <div class="metric-value">850L</div>
+                        <div class="metric-label" data-en="Water Tank Level" data-hi="पानी टैंक स्तर" data-mr="पाणी टाकी पातळी">Water Tank Level</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value">2.3 bar</div>
+                        <div class="metric-label" data-en="Water Pressure" data-hi="पानी का दबाव" data-mr="पाण्याचा दाब">Water Pressure</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value">0 L/min</div>
+                        <div class="metric-label" data-en="Flow Rate" data-hi="प्रवाह दर" data-mr="प्रवाह दर">Flow Rate</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reports Tab -->
+        <div id="reports" class="tab-content">
+            <div class="card">
+                <h3>📈 Weekly Summary</h3>
+                <div class="metrics-grid">
+                    <div class="metric">
+                        <div class="metric-value">2,340L</div>
+                        <div class="metric-label">Water Used This Week</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value">98.5%</div>
+                        <div class="metric-label">System Uptime</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value">3</div>
+                        <div class="metric-label">Issues Resolved</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value">87%</div>
+                        <div class="metric-label">Crop Health Average</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>🏆 Performance Insights</h3>
+                <div style="padding: 1rem 0;">
+                    <p>✅ <strong>Best Performing Field:</strong> ROW 4- 95% health score</p>
+                    <p>⚠️ <strong>Needs Attention:</strong> ROW 3 - Fungal treatment required</p>
+                    <p>💡 <strong>Recommendation:</strong> Increase irrigation frequency for ROW 6</p>
+                    <p>📊 <strong>Water Efficiency:</strong> 15% improvement from last month</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>📅 Scheduled Activities</h3>
+                <div style="padding: 1rem 0;">
+                    <div class="alert-item">
+                        <span>📅</span> Tomorrow 6:00 AM - Automated watering cycle for all fields
+                    </div>
+                    <div class="alert-item">
+                        <span>🔍</span> Thursday 2:00 PM - Scheduled health inspection
+                    </div>
+                    <div class="alert-item">
+                        <span>🌱</span> Saturday - Fertilizer application for Fields A & D
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+   <div class="card">
+    <h3>🔋 System Status</h3>
+    <div class="metrics-grid">
+        <div class="metric">
+            <div class="metric-label">Water Tank Capacity</div>
+            <div class="progress-container">
+                <div id="waterTankBar" class="progress-bar"></div>
+            </div>
+            <div id="waterTankBar-label" class="progress-label">75%</div>
+        </div>
+        <div class="metric">
+            <div class="metric-label">Battery Left</div>
+            <div class="progress-container">
+                <div id="batteryBar" class="progress-bar"></div>
+            </div>
+            <div id="batteryBar-label" class="progress-label">62%</div>
+        </div>
+    </div>
+</div>
+
+
+    <script>
+        // Language switching functionality
+        let currentLanguage = 'en';
+       
+        const translations = {
+            en: {
+                mainTitle: "🌱 Smart Farm Monitor",
+                systemStatus: "System Online • Last Updated:",
+                farmDashboard: "🗺️ Farm Dashboard",
+                quickMetrics: "📊 Quick Metrics",
+                temperature: "Temperature",
+                humidity: "Humidity",
+                soilPh: "Soil pH",
+                soilMoisture: "Soil Moisture",
+                activeAlerts: "⚠️ Active Alerts",
+                environmentalMonitoring: "🌡️ Environmental Monitoring",
+                airTemperature: "Air Temperature",
+                airHumidity: "Air Humidity",
+                soilPhLevel: "Soil pH Level",
+                diseaseDetection: "🦠 Disease Detection",
+                sprinklerSystemControl: "💧 Sprinkler System Control",
+                startSprinkler: "Start Sprinkler",
+                stopSprinkler: "Stop Sprinkler",
+                duration: "Duration",
+                minutes: "minutes",
+                status: "Status",
+                stopped: "Stopped",
+                running: "Running",
+                masterControls: "🎛️ Master Controls",
+                startAll: "Start All Sprinklers",
+                emergencyStop: "Emergency Stop All",
+                activeSprinklers: "Active Sprinklers",
+                waterTankLevel: "Water Tank Level",
+                waterPressure: "Water Pressure",
+                flowRate: "Flow Rate",
+                weeklySummary: "📈 Weekly Summary",
+                waterUsedWeek: "Water Used This Week",
+                systemUptime: "System Uptime",
+                issuesResolved: "Issues Resolved",
+                cropHealthAvg: "Crop Health Average",
+                performanceInsights: "🏆 Performance Insights",
+                scheduledActivities: "📅 Scheduled Activities"
+            },
+            hi: {
+                mainTitle: "🌱 स्मार्ट फार्म मॉनिटर",
+                systemStatus: "सिस्टम ऑनलाइन • अंतिम अपडेट:",
+                farmDashboard: "🗺️ फार्म डैशबोर्ड",
+                quickMetrics: "📊 त्वरित मैट्रिक्स",
+                temperature: "तापमान",
+                humidity: "नमी",
+                soilPh: "मिट्टी pH",
+                soilMoisture: "मिट्टी की नमी",
+                activeAlerts: "⚠️ सक्रिय अलर्ट",
+                environmentalMonitoring: "🌡️ पर्यावरण निगरानी",
+                airTemperature: "हवा का तापमान",
+                airHumidity: "हवा की नमी",
+                soilPhLevel: "मिट्टी pH स्तर",
+                diseaseDetection: "🦠 रोग की पहचान",
+                sprinklerSystemControl: "💧 स्प्रिंकलर सिस्टम नियंत्रण",
+                startSprinkler: "स्प्रिंकलर चालू करें",
+                stopSprinkler: "स्प्रिंकलर बंद करें",
+                duration: "अवधि",
+                minutes: "मिनट",
+                status: "स्थिति",
+                stopped: "बंद",
+                running: "चालू",
+                masterControls: "🎛️ मुख्य नियंत्रण",
+                startAll: "सभी स्प्रिंकलर चालू करें",
+                emergencyStop: "आपातकालीन सभी बंद",
+                activeSprinklers: "सक्रिय स्प्रिंकलर",
+                waterTankLevel: "पानी टैंक स्तर",
+                waterPressure: "पानी का दबाव",
+                flowRate: "प्रवाह दर",
+                weeklySummary: "📈 साप्ताहिक सारांश",
+                waterUsedWeek: "इस सप्ताह उपयोग पानी",
+                systemUptime: "सिस्टम अपटाइम",
+                issuesResolved: "समस्याएं हल",
+                cropHealthAvg: "फसल स्वास्थ्य औसत",
+                performanceInsights: "🏆 प्रदर्शन अंतर्दृष्टि",
+                scheduledActivities: "📅 निर्धारित गतिविधियां"
+            },
+            mr: {
+                mainTitle: "🌱 स्मार्ट फार्म मॉनिटर",
+                systemStatus: "सिस्टम ऑनलाईन • शेवटचे अपडेट:",
+                farmDashboard: "🗺️ शेत डॅशबोर्ड",
+                quickMetrics: "📊 जलद मेट्रिक्स",
+                temperature: "तापमान",
+                humidity: "आर्द्रता",
+                soilPh: "माती pH",
+                soilMoisture: "मातीची ओलावा",
+                activeAlerts: "⚠️ सक्रिय सूचना",
+                environmentalMonitoring: "🌡️ पर्यावरण निरीक्षण",
+                airTemperature: "हवेचे तापमान",
+                airHumidity: "हवेची आर्द्रता",
+                soilPhLevel: "माती pH पातळी",
+                diseaseDetection: "🦠 रोग शोध",
+                sprinklerSystemControl: "💧 फवारा यंत्रणा नियंत्रण",
+                startSprinkler: "फवारा सुरू करा",
+                stopSprinkler: "फवारा बंद करा",
+                duration: "कालावधी",
+                minutes: "मिनिटे",
+                status: "स्थिती",
+                stopped: "बंद",
+                running: "चालू",
+                masterControls: "🎛️ मुख्य नियंत्रणे",
+                startAll: "सर्व फवारे सुरू करा",
+                emergencyStop: "आपत्कालीन सर्व बंद",
+                activeSprinklers: "सक्रिय फवारे",
+                waterTankLevel: "पाणी टाकी पातळी",
+                waterPressure: "पाण्याचा दाब",
+                flowRate: "प्रवाह दर",
+                weeklySummary: "📈 साप्ताहिक सारांश",
+                waterUsedWeek: "या आठवड्यात वापरलेले पाणी",
+                systemUptime: "सिस्टम अपटाइम",
+                issuesResolved: "सोडवलेल्या समस्या",
+                cropHealthAvg: "पीक आरोग्य सरासरी",
+                performanceInsights: "🏆 कामगिरी अंतर्दृष्टी",
+                scheduledActivities: "📅 नियोजित क्रियाकलाप"
+            }
+        };
+
+       function changeLanguage() {
+    const select = document.getElementById('langSelect');
+    currentLanguage = select.value;
+    updateLanguage();
+}
+
+function updateLanguage() {
+    const t = translations[currentLanguage];
+   
+    // Update main elements
+    document.getElementById('mainTitle').textContent = t.mainTitle;
+    document.getElementById('systemStatus').innerHTML = `<div class="status-indicator"></div><span class="status">${t.systemStatus} <span id="lastUpdate">--:--</span></span>`;
+   
+    // Update tabs
+    document.querySelectorAll('.tab').forEach(tab => {
+        const key = `data-${currentLanguage}`;
+        if (tab.getAttribute(key)) {
+            tab.textContent = tab.getAttribute(key);
+        }
+    });
+   
+    // Update all translatable elements
+    updateTranslatableElements();
+    updateTime(); // Refresh time display
+}
+
+function updateTranslatableElements() {
+    const t = translations[currentLanguage];
+   
+    // Update elements with data attributes
+    document.querySelectorAll('[data-en]').forEach(element => {
+        const key = `data-${currentLanguage}`;
+        if (element.getAttribute(key)) {
+            if (element.tagName === 'LABEL') {
+                // Handle labels with spans inside
+                const span = element.querySelector('span');
+                const spanValue = span ? span.outerHTML : '';
+                element.innerHTML = element.getAttribute(key) + ' ' + spanValue;
+            } else {
+                element.textContent = element.getAttribute(key);
+            }
+        }
+    });
+   
+    // Update section headers
+    const sectionHeaders = document.querySelectorAll('h3, h4');
+    sectionHeaders.forEach(header => {
+        Object.entries(t).forEach(([key, value]) => {
+            if (header.textContent.includes(translations.en[key]) ||
+                header.textContent.includes(translations.hi[key]) ||
+                header.textContent.includes(translations.mr[key])) {
+                header.textContent = value;
+            }
+        });
+    });
+}
+
+function updateTime() {
+    const now = new Date();
+    document.getElementById('lastUpdate').textContent = now.toLocaleTimeString();
+}
+
+// Initialize and update every 30 seconds
+updateTime();
+setInterval(updateTime, 30000);
+
+// Tab switching functionality
+function showTab(tabName) {
+    // Hide all tab contents
+    const contents = document.querySelectorAll('.tab-content');
+    contents.forEach(content => content.classList.remove('active'));
+   
+    // Remove active class from all tabs
+    const tabs = document.querySelectorAll('.tab');
+    tabs.forEach(tab => tab.classList.remove('active'));
+   
+    // Show selected tab content
+    document.getElementById(tabName).classList.add('active');
+   
+    // Add active class to clicked tab
+    event.target.classList.add('active');
+}
+
+// Field selection
+function selectField(fieldId) {
+    alert(`Selected ${fieldId} - Detailed view would open here`);
+}
+
+// Sprinkler controls
+function startSprinkler(row) {
+    const statusElement = document.getElementById(`status${row}`);
+    const runningText = currentLanguage === 'en' ? 'Running' :
+                       currentLanguage === 'hi' ? 'चालू' : 'चालू';
+    statusElement.textContent = runningText;
+    statusElement.style.color = '#28a745';
+    statusElement.style.fontWeight = 'bold';
+   
+    // Update active sprinklers count
+    updateActiveSprinklers();
+   
+    // Show notification
+    const message = currentLanguage === 'en' ? `Sprinkler system started for Row ${row}` :
+                   currentLanguage === 'hi' ? `पंक्ति ${row} के लिए स्प्रिंकलर सिस्टम चालू किया गया` :
+                   `रांग ${row} साठी फवारा प्रणाली सुरू केली`;
+    showNotification(message, 'success');
+}
+
+function stopSprinkler(row) {
+    const statusElement = document.getElementById(`status${row}`);
+    const stoppedText = currentLanguage === 'en' ? 'Stopped' :
+                       currentLanguage === 'hi' ? 'बंद' : 'बंद';
+    statusElement.textContent = stoppedText;
+    statusElement.style.color = '#dc3545';
+    statusElement.style.fontWeight = 'normal';
+   
+    // Update active sprinklers count
+    updateActiveSprinklers();
+   
+    // Show notification
+    const message = currentLanguage === 'en' ? `Sprinkler system stopped for Row ${row}` :
+                   currentLanguage === 'hi' ? `पंक्ति ${row} के लिए स्प्रिंकलर सिस्टम बंद किया गया` :
+                   `रांग ${row} साठी फवारा प्रणाली बंद केली`;
+    showNotification(message, 'info');
+}
+
+function updateDuration(field, value) {
+    document.getElementById(`duration${field}`).textContent = value;
+}
+
+function startAllSprinklers() {
+    const runningText = currentLanguage === 'en' ? 'Running' :
+                       currentLanguage === 'hi' ? 'चालू' : 'चालू';
+    ['1', '2', '3', '4', '5', '6'].forEach(row => {
+        const statusElement = document.getElementById(`status${row}`);
+        statusElement.textContent = runningText;
+        statusElement.style.color = '#28a745';
+        statusElement.style.fontWeight = 'bold';
+    });
+    updateActiveSprinklers();
+    const message = currentLanguage === 'en' ? 'All sprinkler systems activated' :
+                   currentLanguage === 'hi' ? 'सभी स्प्रिंकलर सिस्टम सक्रिय किए गए' :
+                   'सर्व फवारा प्रणाली सक्रिय केल्या';
+    showNotification(message, 'success');
+}
+
+function stopAllSprinklers() {
+    const stoppedText = currentLanguage === 'en' ? 'Stopped' :
+                       currentLanguage === 'hi' ? 'बंद' : 'बंद';
+    ['1', '2', '3', '4', '5', '6'].forEach(row => {
+        const statusElement = document.getElementById(`status${row}`);
+        statusElement.textContent = stoppedText;
+        statusElement.style.color = '#dc3545';
+        statusElement.style.fontWeight = 'normal';
+    });
+    updateActiveSprinklers();
+    const message = currentLanguage === 'en' ? 'Emergency stop - All sprinklers deactivated' :
+                   currentLanguage === 'hi' ? 'आपातकालीन स्टॉप - सभी स्प्रिंकलर निष्क्रिय किए गए' :
+                   'आपत्कालीन स्टॉप - सर्व फवारे निष्क्रिय केले';
+    showNotification(message, 'warning');
+}
+
+function updateActiveSprinklers() {
+    let activeCount = 0;
+    ['1', '2', '3', '4', '5', '6'].forEach(row => {
+        const status = document.getElementById(`status${row}`).textContent;
+        if (status === 'Running' || status === 'चालू') {
+            activeCount++;
+        }
+    });
+   
+    // Update flow rate simulation
+    const flowRateElements = document.querySelectorAll('.metric .metric-value');
+    flowRateElements.forEach(el => {
+        if (el.textContent.includes('L/min')) {
+            el.textContent = `${activeCount * 10.5} L/min`;
+        }
+    });
+}
+
+function showNotification(message, type) {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: ${type === 'success' ? '#28a745' : type === 'warning' ? '#ffc107' : '#17a2b8'};
+        color: white;
+        padding: 1rem 1.5rem;
+        border-radius: 10px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        z-index: 1000;
+        transform: translateX(100%);
+        transition: transform 0.3s ease;
+    `;
+    notification.textContent = message;
+   
+    document.body.appendChild(notification);
+   
+    // Slide in
+    setTimeout(() => {
+        notification.style.transform = 'translateX(0)';
+    }, 100);
+   
+    // Remove after 3 seconds
+    setTimeout(() => {
+        notification.style.transform = 'translateX(100%)';
+        setTimeout(() => {
+            document.body.removeChild(notification);
+        }, 300);
+    }, 3000);
+}
+
+// ✅ Update progress bar values (for tank & battery)
+function updateProgressBar(id, value) {
+    const bar = document.getElementById(id);
+    const label = document.getElementById(`${id}-label`);
+    if (bar && label) {
+        bar.style.width = value + '%';
+        label.textContent = value + '%';
+        if (value > 70) {
+            bar.style.background = '#28a745'; // green
+        } else if (value > 40) {
+            bar.style.background = '#ffc107'; // yellow
+        } else {
+            bar.style.background = '#dc3545'; // red
+        }
+    }
+}
+
+// Simulate real-time data updates
+function simulateDataUpdates() {
+    const metrics = document.querySelectorAll('.metric-value');
+   
+    setInterval(() => {
+        // Update temperature occasionally
+        if (Math.random() > 0.7) {
+            const tempMetrics = Array.from(metrics).filter(m => m.textContent.includes('°C'));
+            tempMetrics.forEach(metric => {
+                const currentTemp = parseInt(metric.textContent);
+                const newTemp = currentTemp + (Math.random() > 0.5 ? 1 : -1);
+                metric.textContent = `${Math.max(18, Math.min(30, newTemp))}°C`;
+            });
+        }
+       
+        // Update humidity occasionally
+        if (Math.random() > 0.8) {
+            const humidityMetrics = Array.from(metrics).filter(m => m.textContent.includes('%') && !m.textContent.includes('L'));
+            humidityMetrics.forEach(metric => {
+                if (metric.textContent.includes('%')) {
+                    const currentHumidity = parseInt(metric.textContent);
+                    const newHumidity = currentHumidity + (Math.random() > 0.5 ? 2 : -2);
+                    metric.textContent = `${Math.max(30, Math.min(90, newHumidity))}%`;
+                }
+            });
+        }
+
+        // ✅ Simulate tank & battery updates
+        const newTank = Math.floor(Math.random() * 40) + 60; // 60–100%
+        const newBattery = Math.floor(Math.random() * 50) + 30; // 30–80%
+        updateProgressBar('waterTankBar', newTank);
+        updateProgressBar('batteryBar', newBattery);
+
+    }, 10000); // Update every 10s
+}
+
+// Initialize the simulation
+simulateDataUpdates();
+    </script>
+</body>
+</html>
